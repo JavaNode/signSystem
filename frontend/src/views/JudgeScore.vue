@@ -188,16 +188,21 @@
 
               <!-- 评分输入 -->
               <div class="score-input">
-                <el-input-number
-                  v-model="participant.newScore"
-                  :min="0"
-                  :max="10"
-                  :step="0.1"
-                  :precision="1"
-                  placeholder="0-10分"
-                  size="large"
-                  class="score-number-input"
-                />
+                <div class="score-slider-container">
+                  <el-slider
+                    v-model="participant.newScore"
+                    :min="0"
+                    :max="10"
+                    :step="0.1"
+                    :format-tooltip="formatTooltip"
+                    show-input
+                    :show-input-controls="true"
+                    class="score-slider"
+                  />
+                  <div class="score-display-large">
+                    {{ participant.newScore || 0 }} 分
+                  </div>
+                </div>
                 <el-button 
                   type="primary"
                   size="large"
@@ -350,6 +355,10 @@ const loadParticipants = async () => {
 
 const isValidScore = (score: number | null) => {
   return score !== null && score >= 0 && score <= 10
+}
+
+const formatTooltip = (value: number) => {
+  return `${value} 分`
 }
 
 const submitScore = async (participant: any) => {
@@ -690,16 +699,38 @@ onMounted(() => {
 
 .score-input {
   display: flex;
-  gap: 12px;
-  align-items: center;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
 }
 
-.score-number-input {
-  width: 100px;
+.score-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.score-slider {
+  width: 100%;
+}
+
+.score-display-large {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #667eea;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
 }
 
 .submit-score-btn {
   border-radius: 8px;
+  height: 48px;
+  font-size: 16px;
 }
 
 /* 响应式设计 */

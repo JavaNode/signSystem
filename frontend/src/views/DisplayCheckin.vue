@@ -1,541 +1,464 @@
 <template>
-  <div class="display-checkin">
+  <div class="display-container">
     <!-- 顶部标题栏 -->
-    <div class="display-header">
-      <div class="header-content">
-        <div class="logo-section">
-          <el-icon class="logo-icon"><Trophy /></el-icon>
-          <div class="title-section">
-            <h1 class="main-title">联盟杯内训师大赛</h1>
-            <p class="sub-title">实时签到展示大屏</p>
-          </div>
-        </div>
-        <div class="time-section">
-          <div class="current-time">{{ currentTime }}</div>
-          <div class="current-date">{{ currentDate }}</div>
-        </div>
+    <div class="header">
+      <div class="title-section">
+        <h1 class="main-title">亚联盟杯 - 内训师大赛</h1>
+        <div class="subtitle">实时签到系统</div>
       </div>
-    </div>
-
-    <!-- 统计数据区域 -->
-    <div class="stats-section">
-      <div class="stats-container">
-        <div class="stat-card total-card">
-          <div class="stat-icon">
-            <el-icon><UserFilled /></el-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-number">{{ stats.totalParticipants }}</div>
-            <div class="stat-label">总参赛者</div>
-          </div>
-          <div class="stat-progress">
-            <div class="progress-bar">
-              <div class="progress-fill total-fill" :style="{ width: '100%' }"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card checkin-card">
-          <div class="stat-icon">
-            <el-icon><CircleCheckFilled /></el-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-number">{{ stats.checkedIn }}</div>
-            <div class="stat-label">已签到</div>
-          </div>
-          <div class="stat-progress">
-            <div class="progress-bar">
-              <div 
-                class="progress-fill checkin-fill" 
-                :style="{ width: checkinProgress + '%' }"
-              ></div>
-            </div>
-            <div class="progress-text">{{ checkinProgress }}%</div>
-          </div>
-        </div>
-
-        <div class="stat-card pending-card">
-          <div class="stat-icon">
-            <el-icon><Clock /></el-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-number">{{ stats.totalParticipants - stats.checkedIn }}</div>
-            <div class="stat-label">未签到</div>
-          </div>
-          <div class="stat-progress">
-            <div class="progress-bar">
-              <div 
-                class="progress-fill pending-fill" 
-                :style="{ width: (100 - checkinProgress) + '%' }"
-              ></div>
-            </div>
-            <div class="progress-text">{{ 100 - checkinProgress }}%</div>
-          </div>
-        </div>
-      </div>
+      <div class="datetime">{{ currentTime }}</div>
     </div>
 
     <!-- 主要内容区域 -->
     <div class="main-content">
-      <!-- 左侧：最新签到动态 -->
-      <div class="left-panel">
-        <div class="panel-header">
-          <el-icon><Notification /></el-icon>
-          <h3>最新签到动态</h3>
-          <div class="refresh-indicator" :class="{ 'active': isRefreshing }">
-            <el-icon><Refresh /></el-icon>
+      <!-- 统计卡片区域 -->
+      <div class="stats-row">
+        <div class="stat-card total">
+          <div class="stat-icon">👥</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ checkinStats.total_participants }}</div>
+            <div class="stat-label">总参赛人数</div>
           </div>
         </div>
-        
-        <div class="recent-checkins">
-          <transition-group name="checkin-item" tag="div">
-            <div 
-              v-for="checkin in recentCheckins" 
-              :key="checkin.id"
-              class="checkin-item"
-            >
-              <div class="checkin-avatar">
-                <el-avatar :size="50">
-                  {{ checkin.name.charAt(0) }}
-                </el-avatar>
-                <div class="checkin-status">
-                  <el-icon><CircleCheckFilled /></el-icon>
-                </div>
-              </div>
-              <div class="checkin-info">
-                <div class="checkin-name">{{ checkin.name }}</div>
-                <div class="checkin-org">{{ checkin.organization }}</div>
-                <div class="checkin-time">{{ formatTime(checkin.checkin_time) }}</div>
-              </div>
-              <div class="checkin-animation">
-                <div class="success-ripple"></div>
-              </div>
-            </div>
-          </transition-group>
+        <div class="stat-card checked">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ checkinStats.checked_in }}</div>
+            <div class="stat-label">已签到</div>
+          </div>
         </div>
-
-        <!-- 空状态 -->
-        <div v-if="recentCheckins.length === 0" class="empty-checkins">
-          <el-icon class="empty-icon"><DocumentRemove /></el-icon>
-          <p>暂无签到记录</p>
+        <div class="stat-card pending">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ checkinStats.not_checked_in }}</div>
+            <div class="stat-label">未签到</div>
+          </div>
+        </div>
+        <div class="stat-card rate">
+          <div class="stat-icon">📊</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ checkinStats.checkin_rate }}%</div>
+            <div class="stat-label">签到率</div>
+          </div>
         </div>
       </div>
 
-      <!-- 右侧：签到统计图表 -->
-      <div class="right-panel">
-        <div class="panel-header">
-          <el-icon><DataAnalysis /></el-icon>
-          <h3>签到统计图表</h3>
-        </div>
-        
-        <div class="chart-container">
-          <div ref="chartRef" class="chart"></div>
-        </div>
-
-        <!-- 分组统计 -->
-        <div class="group-stats">
-          <h4>
-            <el-icon><Collection /></el-icon>
-            分组签到情况
-          </h4>
-          <div class="group-list">
-            <div 
-              v-for="group in groupStats" 
-              :key="group.group_name"
-              class="group-item"
-            >
-              <div class="group-info">
-                <div class="group-name">{{ group.group_name }}</div>
-                <div class="group-count">{{ group.checked_in }}/{{ group.total }}</div>
-              </div>
-              <div class="group-progress">
-                <div class="group-progress-bar">
+      <!-- 内容区域 -->
+      <div class="content-row">
+        <!-- 左侧：各组进度 -->
+        <div class="left-panel">
+          <div class="panel-card">
+            <div class="panel-header">
+              <h3>各组签到进度</h3>
+            </div>
+            <div class="group-progress">
+              <div 
+                v-for="group in groupStats" 
+                :key="group.group_name"
+                class="group-item"
+              >
+                <div class="group-info">
+                  <span class="group-name">{{ group.group_name }}</span>
+                  <span class="group-ratio">{{ group.checked_in }}/{{ group.total }}</span>
+                </div>
+                <div class="progress-bar">
                   <div 
-                    class="group-progress-fill"
-                    :style="{ 
-                      width: (group.total > 0 ? (group.checked_in / group.total * 100) : 0) + '%',
-                      backgroundColor: getGroupColor(group.group_name)
-                    }"
+                    class="progress-fill" 
+                    :style="{ width: getProgressWidth(group) + '%' }"
                   ></div>
                 </div>
-                <div class="group-percentage">
-                  {{ group.total > 0 ? Math.round(group.checked_in / group.total * 100) : 0 }}%
+                <div class="progress-percent">{{ getProgressPercent(group) }}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 中间：二维码 -->
+        <div class="center-panel">
+          <div class="qr-card">
+            <div class="qr-header">
+              <h3>扫码签到</h3>
+            </div>
+            <div class="qr-container">
+              <canvas ref="qrCanvas" class="qr-code"></canvas>
+            </div>
+            <div class="qr-instruction">
+              请使用手机扫描二维码进行签到
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：最新签到 -->
+        <div class="right-panel">
+          <div class="panel-card">
+            <div class="panel-header">
+              <h3>最新签到</h3>
+            </div>
+            <div class="recent-list">
+              <div 
+                v-for="(checkin, index) in recentCheckins" 
+                :key="checkin.id"
+                class="recent-item"
+                :class="{ 'latest': index === 0 }"
+              >
+                <div class="participant-avatar">
+                  {{ checkin.participant_name ? checkin.participant_name.charAt(0) : '?' }}
                 </div>
+                <div class="participant-info">
+                  <div class="participant-name">{{ checkin.participant_name || checkin.name }}</div>
+                  <div class="participant-org">{{ checkin.organization }}</div>
+                </div>
+                <div class="checkin-time">{{ formatTime(checkin.checkin_time) }}</div>
+              </div>
+              <div v-if="recentCheckins.length === 0" class="no-data">
+                暂无签到记录
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- 底部滚动横幅 -->
-    <div class="bottom-banner">
-      <div class="banner-content">
-        <div class="banner-text">
-          🎉 欢迎参加联盟杯内训师大赛！请各位参赛者及时签到，比赛即将开始！祝愿所有参赛者取得优异成绩！
-        </div>
-      </div>
-    </div>
-
-    <!-- 全屏切换按钮 -->
-    <div class="fullscreen-btn" @click="toggleFullscreen">
-      <el-icon><FullScreen /></el-icon>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
-import axios from 'axios'
-import * as echarts from 'echarts'
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import QRCode from 'qrcode'
 
 // 响应式数据
-const currentTime = ref('')
-const currentDate = ref('')
-const isRefreshing = ref(false)
-const chartRef = ref()
-
-const stats = ref({
-  totalParticipants: 0,
-  checkedIn: 0
+const checkinStats = ref({
+  total_participants: 0,
+  checked_in: 0,
+  not_checked_in: 0,
+  checkin_rate: 0
 })
 
-const recentCheckins = ref([])
 const groupStats = ref([])
+const recentCheckins = ref([])
+const currentTime = ref('')
 
-// 计算属性
-const checkinProgress = computed(() => {
-  if (stats.value.totalParticipants === 0) return 0
-  return Math.round((stats.value.checkedIn / stats.value.totalParticipants) * 100)
-})
+// DOM引用
+const qrCanvas = ref(null)
 
-// API配置
-const api = axios.create({
-  baseURL: 'http://localhost:8000/api'
-})
+let refreshInterval = null
 
-// 方法
-const updateTime = () => {
+// 格式化时间
+const formatTime = (timeStr) => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  return date.toLocaleTimeString('zh-CN', { 
+    hour: '2-digit', 
+    minute: '2-digit'
+  })
+}
+
+// 更新当前时间
+const updateCurrentTime = () => {
   const now = new Date()
-  currentTime.value = now.toLocaleTimeString('zh-CN', { 
-    hour12: false,
+  currentTime.value = now.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
   })
-  currentDate.value = now.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'long'
-  })
 }
 
-const loadData = async () => {
+// 计算进度宽度
+const getProgressWidth = (group) => {
+  if (!group.total || group.total === 0) return 0
+  return Math.round((group.checked_in / group.total) * 100)
+}
+
+// 计算进度百分比
+const getProgressPercent = (group) => {
+  if (!group.total || group.total === 0) return 0
+  return Math.round((group.checked_in / group.total) * 100)
+}
+
+// 获取签到统计
+const fetchCheckinStats = async () => {
   try {
-    isRefreshing.value = true
-
-    // 加载统计数据
-    const statsRes = await api.get('/statistics/checkin')
-    stats.value = {
-      totalParticipants: statsRes.data.total_participants || 0,
-      checkedIn: statsRes.data.checked_in || 0
+    const response = await fetch('/api/statistics/checkin')
+    const data = await response.json()
+    checkinStats.value = {
+      total_participants: data.total_participants || 0,
+      checked_in: data.checked_in || 0,
+      not_checked_in: data.not_checked_in || 0,
+      checkin_rate: Math.round(data.checkin_rate || 0)
     }
-
-    // 加载最新签到记录
-    const checkinsRes = await api.get('/checkins/recent?limit=10')
-    recentCheckins.value = checkinsRes.data || []
-
-    // 加载分组统计
-    const groupsRes = await api.get('/statistics/groups')
-    groupStats.value = groupsRes.data || []
-
-    // 更新图表
-    updateChart()
   } catch (error) {
-    console.error('加载数据失败:', error)
-  } finally {
-    setTimeout(() => {
-      isRefreshing.value = false
-    }, 500)
+    console.error('获取签到统计失败:', error)
   }
 }
 
-const updateChart = () => {
-  if (!chartRef.value) return
-  
-  const chart = echarts.init(chartRef.value)
-  
-  // 生成时间轴数据（最近24小时）
-  const hours = []
-  const checkinData = []
-  const now = new Date()
-  
-  for (let i = 23; i >= 0; i--) {
-    const time = new Date(now.getTime() - i * 60 * 60 * 1000)
-    hours.push(time.getHours() + ':00')
-    // 模拟数据，实际应该从API获取
-    checkinData.push(Math.floor(Math.random() * 20))
-  }
-
-  const option = {
-    title: {
-      text: '24小时签到趋势',
-      left: 'center',
-      textStyle: {
-        color: '#2c3e50',
-        fontSize: 16,
-        fontWeight: 'bold'
-      }
-    },
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: 'rgba(0,0,0,0.8)',
-      textStyle: {
-        color: '#fff'
-      }
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: hours,
-      axisLine: {
-        lineStyle: {
-          color: '#e0e6ed'
-        }
-      },
-      axisLabel: {
-        color: '#7f8c8d'
-      }
-    },
-    yAxis: {
-      type: 'value',
-      axisLine: {
-        lineStyle: {
-          color: '#e0e6ed'
-        }
-      },
-      axisLabel: {
-        color: '#7f8c8d'
-      },
-      splitLine: {
-        lineStyle: {
-          color: '#f5f7fa'
-        }
-      }
-    },
-    series: [
-      {
-        name: '签到人数',
-        type: 'line',
-        smooth: true,
-        data: checkinData,
-        lineStyle: {
-          color: '#667eea',
-          width: 3
-        },
-        itemStyle: {
-          color: '#667eea'
-        },
-        areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(102, 126, 234, 0.3)' },
-              { offset: 1, color: 'rgba(102, 126, 234, 0.1)' }
-            ]
-          }
-        }
-      }
-    ]
-  }
-  
-  chart.setOption(option)
-}
-
-const formatTime = (timeString: string) => {
-  if (!timeString) return ''
-  const time = new Date(timeString)
-  return time.toLocaleTimeString('zh-CN', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  })
-}
-
-const getGroupColor = (groupName: string) => {
-  const colors = [
-    '#667eea', '#764ba2', '#67C23A', '#E6A23C', 
-    '#F56C6C', '#909399', '#409EFF', '#36CFC9'
-  ]
-  const index = groupName.charCodeAt(0) % colors.length
-  return colors[index]
-}
-
-const toggleFullscreen = () => {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen()
-  } else {
-    document.exitFullscreen()
+// 获取分组统计
+const fetchGroupStats = async () => {
+  try {
+    const response = await fetch('/api/statistics/groups')
+    const data = await response.json()
+    groupStats.value = data || []
+  } catch (error) {
+    console.error('获取分组统计失败:', error)
   }
 }
 
-// 定时器
-let timeInterval: number
-let dataInterval: number
+// 获取最新签到记录
+const fetchRecentCheckins = async () => {
+  try {
+    const response = await fetch('/api/checkins/recent?limit=8')
+    const data = await response.json()
+    recentCheckins.value = data || []
+  } catch (error) {
+    console.error('获取最新签到记录失败:', error)
+  }
+}
 
-// 生命周期
+// 生成二维码
+const generateQRCode = async () => {
+  try {
+    if (qrCanvas.value) {
+      const checkinUrl = `${window.location.origin}/mobile/checkin`
+      
+      await QRCode.toCanvas(qrCanvas.value, checkinUrl, {
+        width: 280,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      })
+    }
+  } catch (error) {
+    console.error('生成二维码失败:', error)
+  }
+}
+
+// 刷新所有数据
+const refreshData = async () => {
+  await Promise.all([
+    fetchCheckinStats(),
+    fetchGroupStats(),
+    fetchRecentCheckins()
+  ])
+}
+
 onMounted(async () => {
   // 更新时间
-  updateTime()
-  timeInterval = setInterval(updateTime, 1000)
+  updateCurrentTime()
+  setInterval(updateCurrentTime, 1000)
   
-  // 加载数据
-  await loadData()
-  dataInterval = setInterval(loadData, 10000) // 每10秒刷新一次
+  // 生成二维码
+  await generateQRCode()
   
-  // 初始化图表
-  await nextTick()
-  updateChart()
+  // 初始加载数据
+  await refreshData()
   
-  // 监听窗口大小变化
-  window.addEventListener('resize', () => {
-    if (chartRef.value) {
-      const chart = echarts.getInstanceByDom(chartRef.value)
-      chart?.resize()
-    }
-  })
+  // 设置定时刷新
+  refreshInterval = setInterval(refreshData, 3000)
 })
 
 onUnmounted(() => {
-  if (timeInterval) clearInterval(timeInterval)
-  if (dataInterval) clearInterval(dataInterval)
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
 })
 </script>
 
 <style scoped>
-.display-checkin {
-  min-height: 100vh;
+.display-container {
+  height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.display-header {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 20px 40px;
-}
-
-.header-content {
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1800px;
-  margin: 0 auto;
+  padding: 20px 40px;
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.logo-section {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.logo-icon {
-  font-size: 48px;
-  color: #FFD700;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+.title-section {
+  text-align: left;
 }
 
 .main-title {
-  font-size: 36px;
-  font-weight: bold;
+  font-size: 2.2rem;
+  font-weight: 700;
   margin: 0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(45deg, #fff, #e3f2fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.sub-title {
-  font-size: 18px;
-  opacity: 0.9;
-  margin: 5px 0 0 0;
-}
-
-.time-section {
-  text-align: right;
-}
-
-.current-time {
-  font-size: 32px;
-  font-weight: bold;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.current-date {
-  font-size: 16px;
-  opacity: 0.9;
+.subtitle {
+  font-size: 1rem;
   margin-top: 5px;
+  opacity: 0.9;
+  color: #e3f2fd;
 }
 
-.stats-section {
-  padding: 30px 40px;
+.datetime {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: #e3f2fd;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.stats-container {
+.main-content {
+  flex: 1;
+  padding: 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.stats-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
-  max-width: 1800px;
-  margin: 0 auto;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 10px;
 }
 
 .stat-card {
   background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 30px;
-  text-align: center;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-2px);
+}
+
+.stat-card.total {
+  background: linear-gradient(135deg, rgba(103, 194, 58, 0.2), rgba(103, 194, 58, 0.1));
+}
+
+.stat-card.checked {
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.2), rgba(64, 158, 255, 0.1));
+}
+
+.stat-card.pending {
+  background: linear-gradient(135deg, rgba(245, 108, 108, 0.2), rgba(245, 108, 108, 0.1));
+}
+
+.stat-card.rate {
+  background: linear-gradient(135deg, rgba(230, 162, 60, 0.2), rgba(230, 162, 60, 0.1));
 }
 
 .stat-icon {
-  font-size: 48px;
-  margin-bottom: 20px;
-  color: #FFD700;
+  font-size: 2.5rem;
+  opacity: 0.8;
 }
 
 .stat-number {
-  font-size: 48px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .stat-label {
-  font-size: 18px;
+  font-size: 1rem;
   opacity: 0.9;
+  font-weight: 500;
+}
+
+.content-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.left-panel, .center-panel, .right-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-card, .qr-card {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header, .qr-header {
+  text-align: center;
   margin-bottom: 20px;
 }
 
-.stat-progress {
-  position: relative;
+.panel-header h3, .qr-header h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.group-progress {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.group-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border-left: 4px solid #67C23A;
+}
+
+.group-info {
+  min-width: 80px;
+  text-align: left;
+}
+
+.group-name {
+  font-weight: 600;
+  font-size: 1rem;
+  display: block;
+}
+
+.group-ratio {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  display: block;
+  margin-top: 2px;
 }
 
 .progress-bar {
+  flex: 1;
   height: 8px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
@@ -544,305 +467,148 @@ onUnmounted(() => {
 
 .progress-fill {
   height: 100%;
+  background: linear-gradient(90deg, #67C23A, #85CE61);
   border-radius: 4px;
-  transition: width 1s ease;
+  transition: width 0.3s ease;
 }
 
-.total-fill {
-  background: linear-gradient(90deg, #FFD700, #FFA500);
+.progress-percent {
+  min-width: 40px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
-.checkin-fill {
-  background: linear-gradient(90deg, #67C23A, #85ce61);
-}
-
-.pending-fill {
-  background: linear-gradient(90deg, #E6A23C, #f0a020);
-}
-
-.progress-text {
-  position: absolute;
-  top: -25px;
-  right: 0;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.main-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  padding: 0 40px 30px;
-  max-width: 1800px;
-  margin: 0 auto;
-}
-
-.left-panel, .right-panel {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.panel-header {
+.qr-container {
+  text-align: center;
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 30px;
-  font-size: 20px;
-  font-weight: bold;
+  justify-content: center;
 }
 
-.refresh-indicator {
-  margin-left: auto;
-  transition: transform 0.5s ease;
+.qr-code {
+  border-radius: 16px;
+  background: white;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-.refresh-indicator.active {
-  transform: rotate(360deg);
+.qr-instruction {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #e3f2fd;
 }
 
-.recent-checkins {
-  max-height: 400px;
+.recent-list {
+  flex: 1;
   overflow-y: auto;
 }
 
-.checkin-item {
+.recent-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  margin-bottom: 12px;
-  position: relative;
-  overflow: hidden;
+  border-left: 4px solid #409EFF;
+  transition: background 0.3s ease;
 }
 
-.checkin-avatar {
-  position: relative;
+.recent-item.latest {
+  background: rgba(103, 194, 58, 0.2);
+  border-left-color: #67C23A;
+  animation: pulse 2s infinite;
 }
 
-.checkin-status {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  background: #67C23A;
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.participant-avatar {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  background: linear-gradient(135deg, #409EFF, #67C23A);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-weight: 700;
+  font-size: 1.2rem;
   color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.checkin-name {
-  font-size: 16px;
+.participant-info {
+  flex: 1;
+}
+
+.participant-name {
   font-weight: 600;
-  margin-bottom: 4px;
+  font-size: 1rem;
+  margin-bottom: 2px;
 }
 
-.checkin-org {
-  font-size: 14px;
+.participant-org {
+  font-size: 0.85rem;
   opacity: 0.8;
-  margin-bottom: 4px;
 }
 
 .checkin-time {
-  font-size: 12px;
+  font-size: 0.8rem;
   opacity: 0.7;
-}
-
-.checkin-animation {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.success-ripple {
-  width: 40px;
-  height: 40px;
-  border: 2px solid #67C23A;
-  border-radius: 50%;
-  opacity: 0.6;
-  animation: ripple 2s infinite;
-}
-
-.empty-checkins {
-  text-align: center;
-  padding: 60px 20px;
-  opacity: 0.7;
-}
-
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.chart-container {
-  height: 300px;
-  margin-bottom: 30px;
-}
-
-.chart {
-  width: 100%;
-  height: 100%;
-}
-
-.group-stats h4 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  font-size: 16px;
-}
-
-.group-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.group-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-}
-
-.group-name {
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.group-count {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.group-progress {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 120px;
-}
-
-.group-progress-bar {
-  flex: 1;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.group-progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 1s ease;
-}
-
-.group-percentage {
-  font-size: 12px;
-  font-weight: bold;
-  min-width: 35px;
-}
-
-.bottom-banner {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 15px 0;
-  overflow: hidden;
-}
-
-.banner-content {
-  white-space: nowrap;
-  animation: scroll 30s linear infinite;
-}
-
-.banner-text {
-  font-size: 18px;
   font-weight: 500;
 }
 
-@keyframes scroll {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+.no-data {
+  text-align: center;
+  padding: 40px 20px;
+  opacity: 0.7;
+  font-size: 1.1rem;
+  color: #e3f2fd;
 }
 
-@keyframes ripple {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.6;
-  }
-  100% {
-    transform: scale(1.2);
-    opacity: 0;
-  }
+/* 滚动条样式 */
+.group-progress::-webkit-scrollbar,
+.recent-list::-webkit-scrollbar {
+  width: 6px;
 }
 
-.checkin-item-enter-active {
-  transition: all 0.5s ease;
+.group-progress::-webkit-scrollbar-track,
+.recent-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
 }
 
-.checkin-item-enter-from {
-  opacity: 0;
-  transform: translateX(-30px);
-}
-
-.fullscreen-btn {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 50px;
-  height: 50px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 20px;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.fullscreen-btn:hover {
+.group-progress::-webkit-scrollbar-thumb,
+.recent-list::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
+  border-radius: 3px;
+}
+
+.group-progress::-webkit-scrollbar-thumb:hover,
+.recent-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
-  .main-content {
-    grid-template-columns: 1fr;
-  }
-  
-  .stats-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .display-header {
-    padding: 15px 20px;
-  }
-  
-  .header-content {
-    flex-direction: column;
-    gap: 20px;
-    text-align: center;
-  }
-  
   .main-title {
-    font-size: 28px;
+    font-size: 1.8rem;
   }
   
-  .current-time {
-    font-size: 24px;
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .content-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
   }
 }
 </style>

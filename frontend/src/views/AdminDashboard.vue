@@ -337,8 +337,48 @@ const exportData = async () => {
   }
 }
 
-const viewParticipant = (participant: any) => {
-  ElMessage.info(`查看 ${participant.name} 的详细信息`)
+const viewParticipant = async (participant: any) => {
+  try {
+    const response = await api.get(`/participants/${participant.id}/detail`)
+    const detail = response.data
+    
+    // 使用Element Plus的消息框显示详细信息
+    const h = ElMessageBox
+    await ElMessageBox({
+      title: `参赛者详情 - ${detail.name}`,
+      message: h('div', { class: 'participant-detail' }, [
+        h('div', { class: 'detail-section' }, [
+          h('h4', '基本信息'),
+          h('p', `姓名: ${detail.name}`),
+          h('p', `单位: ${detail.organization}`),
+          h('p', `手机: ${detail.phone}`),
+          h('p', `分组: ${detail.group_name}`),
+        ]),
+        h('div', { class: 'detail-section' }, [
+          h('h4', '签到信息'),
+          h('p', `签到状态: ${detail.is_checked_in ? '已签到' : '未签到'}`),
+          h('p', `签到时间: ${detail.checkin_time ? formatTime(detail.checkin_time) : '未签到'}`),
+        ]),
+        h('div', { class: 'detail-section' }, [
+          h('h4', '评分信息'),
+          h('p', `评分次数: ${detail.score_count}`),
+          h('p', `平均分: ${detail.avg_score} 分`),
+        ]),
+        detail.scores.length > 0 && h('div', { class: 'detail-section' }, [
+          h('h4', '详细评分'),
+          ...detail.scores.map(score => 
+            h('p', `${score.judge_name}: ${score.score} 分 (${formatTime(score.created_at)})`)
+          )
+        ])
+      ]),
+      confirmButtonText: '关闭',
+      showCancelButton: false,
+      customClass: 'participant-detail-dialog'
+    })
+  } catch (error) {
+    console.error('获取参赛者详情失败:', error)
+    ElMessage.error('获取参赛者详情失败')
+  }
 }
 
 const openMobileCheckin = () => {
@@ -536,6 +576,38 @@ onMounted(async () => {
   justify-content: space-between;
 }
 
+/* 参赛者详情弹窗样式 */
+:deep(.participant-detail-dialog) {
+  width: 90%;
+  max-width: 600px;
+}
+
+:deep(.participant-detail) {
+  text-align: left;
+}
+
+:deep(.detail-section) {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+:deep(.detail-section h4) {
+  margin: 0 0 12px 0;
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 8px;
+}
+
+:deep(.detail-section p) {
+  margin: 8px 0;
+  color: #495057;
+  line-height: 1.5;
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
@@ -555,6 +627,10 @@ onMounted(async () => {
 
   .stat-number {
     font-size: 24px;
+  }
+  
+  :deep(.participant-detail-dialog) {
+    width: 95%;
   }
 }
 </style>
