@@ -1,0 +1,20 @@
+{
+  "path": "d:\\work\\code\\signSystem",
+  "desc": "联盟杯内训师大赛管理系统 - 完整的比赛管理解决方案，包含参赛者签到、分组管理、抽签、评委打分、实时统计等功能。后端使用FastAPI，前端使用Vue3+Vite。",
+  "id": "55a06d883ec5452a939be49d961f0099",
+  "data": {
+    "spaceKey": "55a06d883ec5452a939be49d961f0099",
+    "connections": {
+      "webIDE": "https://55a06d883ec5452a939be49d961f0099.ap-singapore.cloudstudio.club",
+      "preview": "https://55a06d883ec5452a939be49d961f0099--{port}.ap-singapore.cloudstudio.club",
+      "api": "https://55a06d883ec5452a939be49d961f0099--api.ap-singapore.cloudstudio.club",
+      "pty": "https://55a06d883ec5452a939be49d961f0099--pty.ap-singapore.cloudstudio.club"
+    }
+  },
+  "config": {
+    "api": "https://55a06d883ec5452a939be49d961f0099--api.ap-singapore.cloudstudio.club",
+    "pty": "https://55a06d883ec5452a939be49d961f0099--pty.ap-singapore.cloudstudio.club",
+    "region": "ap-shanghai",
+    "spaceKey": "55a06d883ec5452a939be49d961f0099"
+  }
+}

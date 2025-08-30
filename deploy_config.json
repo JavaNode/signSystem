@@ -1,0 +1,23 @@
+{
+  "name": "联盟杯内训师大赛管理系统",
+  "description": "支持签到、分组、抽签、打分等功能的比赛管理系统",
+  "backend": {
+    "framework": "FastAPI",
+    "port": 8000,
+    "install_commands": [
+      "cd backend",
+      "pip install -r requirements.txt",
+      "python init_db.py"
+    ],
+    "start_command": "cd backend && python simple_app.py"
+  },
+  "frontend": {
+    "framework": "Vue3 + Vite",
+    "port": 5173,
+    "install_commands": [
+      "cd frontend",
+      "npm install"
+    ],
+    "start_command": "cd frontend && npm run dev"
+  }
+}
