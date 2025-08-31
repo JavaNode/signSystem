@@ -611,4 +611,479 @@ onUnmounted(() => {
     gap: 15px;
   }
 }
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .display-container {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+  
+  .header {
+    flex-direction: column;
+    padding: 15px 20px;
+    gap: 10px;
+  }
+  
+  .main-title {
+    font-size: 1.6rem;
+    text-align: center;
+  }
+  
+  .subtitle {
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  .datetime {
+    font-size: 1.1rem;
+    text-align: center;
+  }
+  
+  .main-content {
+    padding: 15px 20px;
+    gap: 15px;
+    overflow: visible;
+  }
+  
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+  
+  .stat-card {
+    padding: 16px;
+    flex-direction: row;
+    text-align: left;
+    gap: 12px;
+    min-height: 80px;
+  }
+  
+  .stat-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+  
+  .stat-info {
+    flex: 1;
+  }
+  
+  .stat-number {
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+  }
+  
+  .stat-label {
+    font-size: 0.9rem;
+  }
+  
+  .content-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    overflow: visible;
+  }
+  
+  .left-panel, .center-panel, .right-panel {
+    overflow: visible;
+  }
+  
+  .panel-card, .qr-card {
+    padding: 20px;
+    min-height: 200px;
+  }
+  
+  .panel-header h3, .qr-header h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+  }
+  
+  .group-progress {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .group-item {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  
+  .group-info {
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+  
+  .progress-bar {
+    flex: 1;
+    margin: 0 10px;
+  }
+  
+  .progress-percent {
+    min-width: 40px;
+    text-align: right;
+  }
+  
+  .qr-container {
+    min-height: 250px;
+  }
+  
+  .qr-code {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .qr-instruction {
+    font-size: 1rem;
+    margin-top: 15px;
+  }
+  
+  .recent-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .recent-item {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .participant-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+  
+  .participant-name {
+    font-size: 0.95rem;
+  }
+  
+  .participant-org {
+    font-size: 0.8rem;
+  }
+  
+  .checkin-time {
+    font-size: 0.75rem;
+  }
+  
+  .no-data {
+    padding: 30px 20px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 12px 15px;
+  }
+  
+  .main-title {
+    font-size: 1.4rem;
+  }
+  
+  .subtitle {
+    font-size: 0.8rem;
+  }
+  
+  .datetime {
+    font-size: 1rem;
+  }
+  
+  .main-content {
+    padding: 12px 15px;
+  }
+  
+  .stats-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 14px;
+    flex-direction: row;
+    min-height: 70px;
+  }
+  
+  .stat-icon {
+    font-size: 1.6rem;
+  }
+  
+  .stat-number {
+    font-size: 1.6rem;
+  }
+  
+  .stat-label {
+    font-size: 0.85rem;
+  }
+  
+  .panel-card, .qr-card {
+    padding: 16px;
+    min-height: 180px;
+  }
+  
+  .panel-header h3, .qr-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .group-progress {
+    max-height: 250px;
+  }
+  
+  .group-item {
+    padding: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .group-info {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .group-name {
+    font-size: 0.9rem;
+  }
+  
+  .group-ratio {
+    font-size: 0.8rem;
+  }
+  
+  .progress-bar {
+    width: 100%;
+    margin: 0;
+  }
+  
+  .progress-percent {
+    font-size: 0.8rem;
+    align-self: flex-end;
+    margin-top: 4px;
+  }
+  
+  .qr-container {
+    min-height: 200px;
+  }
+  
+  .qr-code {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .qr-instruction {
+    font-size: 0.9rem;
+  }
+  
+  .recent-list {
+    max-height: 250px;
+  }
+  
+  .recent-item {
+    padding: 10px;
+  }
+  
+  .participant-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+  
+  .participant-name {
+    font-size: 0.9rem;
+  }
+  
+  .participant-org {
+    font-size: 0.75rem;
+  }
+  
+  .checkin-time {
+    font-size: 0.7rem;
+  }
+}
+
+/* 横屏手机适配 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .display-container {
+    height: 100vh;
+    overflow-y: auto;
+  }
+  
+  .header {
+    flex-direction: row;
+    padding: 8px 20px;
+  }
+  
+  .main-title {
+    font-size: 1.3rem;
+    text-align: left;
+  }
+  
+  .subtitle {
+    font-size: 0.8rem;
+  }
+  
+  .datetime {
+    font-size: 0.9rem;
+  }
+  
+  .main-content {
+    padding: 10px 20px;
+  }
+  
+  .stats-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  
+  .stat-card {
+    padding: 8px;
+    flex-direction: row;
+    gap: 8px;
+  }
+  
+  .stat-icon {
+    font-size: 1.5rem;
+  }
+  
+  .stat-number {
+    font-size: 1.3rem;
+  }
+  
+  .stat-label {
+    font-size: 0.7rem;
+  }
+  
+  .content-row {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .panel-card, .qr-card {
+    padding: 12px;
+  }
+  
+  .panel-header h3, .qr-header h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+  
+  .group-item {
+    flex-direction: row;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .group-info {
+    min-width: 60px;
+  }
+  
+  .group-name {
+    font-size: 0.8rem;
+  }
+  
+  .group-ratio {
+    font-size: 0.7rem;
+  }
+  
+  .progress-percent {
+    font-size: 0.7rem;
+    min-width: 30px;
+  }
+  
+  .qr-code {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .qr-instruction {
+    font-size: 0.8rem;
+  }
+  
+  .recent-item {
+    padding: 8px;
+    margin-bottom: 6px;
+  }
+  
+  .participant-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  
+  .participant-name {
+    font-size: 0.8rem;
+  }
+  
+  .participant-org {
+    font-size: 0.7rem;
+  }
+  
+  .checkin-time {
+    font-size: 0.65rem;
+  }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 320px) {
+  .header {
+    padding: 10px 12px;
+  }
+  
+  .main-title {
+    font-size: 1.2rem;
+  }
+  
+  .subtitle {
+    font-size: 0.75rem;
+  }
+  
+  .datetime {
+    font-size: 0.9rem;
+  }
+  
+  .main-content {
+    padding: 10px 12px;
+  }
+  
+  .stat-card {
+    padding: 12px;
+  }
+  
+  .stat-icon {
+    font-size: 1.6rem;
+  }
+  
+  .stat-number {
+    font-size: 1.6rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .panel-card, .qr-card {
+    padding: 14px;
+  }
+  
+  .qr-code {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .qr-instruction {
+    font-size: 0.85rem;
+  }
+  
+  .group-item, .recent-item {
+    padding: 8px;
+  }
+  
+  .participant-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+  }
+}
 </style>

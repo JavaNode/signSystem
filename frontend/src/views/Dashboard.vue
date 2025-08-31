@@ -1,8 +1,13 @@
 <template>
   <div class="dashboard">
+    <!-- 移动端实时时间显示 -->
+    <div class="mobile-time" v-if="isMobile">
+      {{ currentTime }}
+    </div>
+    
     <div class="header">
-      <h1>🏆 联盟杯内训师大赛管理系统</h1>
-      <p class="subtitle">比赛管理控制台</p>
+      <h1>🏆 {{ isMobile ? '亚联盟杯 - 内训师大赛' : '联盟杯内训师大赛管理系统' }}</h1>
+      <p class="subtitle">{{ isMobile ? '实时签到系统' : '比赛管理控制台' }}</p>
     </div>
 
     <div class="main-content">
@@ -94,16 +99,42 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
+
+import { getApiBaseUrl } from '../config'
 
 const participants = ref([])
 const checkinStats = ref({})
 const scoreStats = ref({})
 const publicQRCode = ref('')
 
+// 移动端检测和时间显示
+const isMobile = ref(false)
+const currentTime = ref('')
+let timeInterval = null
+
+// 检测是否为移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+// 更新时间
+const updateTime = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const seconds = String(now.getSeconds()).padStart(2, '0')
+  
+  currentTime.value = `${year}/${month}/${day}
+${hours}:${minutes}:${seconds}`
+}
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api'
+  baseURL: getApiBaseUrl()
 })
 
 const loadData = async () => {
@@ -143,8 +174,24 @@ const formatTime = (timeString) => {
 
 onMounted(() => {
   loadData()
+  checkMobile()
+  updateTime()
+  
   // 每30秒刷新一次数据
   setInterval(loadData, 30000)
+  
+  // 每秒更新时间
+  timeInterval = setInterval(updateTime, 1000)
+  
+  // 监听窗口大小变化
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  if (timeInterval) {
+    clearInterval(timeInterval)
+  }
+  window.removeEventListener('resize', checkMobile)
 })
 </script>
 
@@ -350,17 +397,170 @@ onMounted(() => {
   color: #718096;
 }
 
+/* 移动端时间显示 */
+.mobile-time {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  color: white;
+  font-size: 12px;
+  text-align: right;
+  line-height: 1.2;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 12px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  white-space: pre-line;
+}
+
+/* 移动端适配 */
 @media (max-width: 768px) {
   .dashboard {
+    padding: 8px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 15px 10px;
+  }
+  
+  .header h1 {
+    font-size: 18px;
+    margin-bottom: 5px;
+    color: white;
+    font-weight: 600;
+  }
+  
+  .header .subtitle {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+  }
+  
+  /* 统计卡片移动端优化 */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .stat-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 20px 15px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .stat-card .stat-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  
+  .stat-card .stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+  
+  .stat-card .stat-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  /* 隐藏移动端不需要的内容 */
+  .qr-section,
+  .participants-section {
+    display: none;
+  }
+  
+  /* 添加实时时间显示 */
+  .dashboard::before {
+    content: '';
+    position: fixed;
+    top: 10px;
+    right: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    z-index: 1000;
+  }
+  
+  /* 添加移动端专用的底部导航提示 */
+  .dashboard::after {
+    content: '← 滑动查看更多 →';
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    text-align: center;
+  }
+}
+
+/* 超小屏幕适配 (iPhone SE等) */
+@media (max-width: 375px) {
+  .stats-grid {
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 15px 10px;
+    min-height: 100px;
+  }
+  
+  .stat-card .stat-number {
+    font-size: 28px;
+  }
+  
+  .stat-card .stat-label {
+    font-size: 11px;
+  }
+  
+  .header h1 {
+    font-size: 16px;
+  }
+}
+
+/* 横屏模式适配 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  
+  .stat-card {
+    min-height: 80px;
     padding: 10px;
   }
   
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .stat-card .stat-number {
+    font-size: 24px;
   }
   
-  .participants-grid {
-    grid-template-columns: 1fr;
+  .header {
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .header h1 {
+    font-size: 16px;
   }
 }
 </style>

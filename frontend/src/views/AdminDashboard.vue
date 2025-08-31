@@ -215,8 +215,10 @@ const tableLoading = ref(false)
 const chartRef = ref()
 
 // API配置
+import { getApiBaseUrl } from '@/config'
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api'
+  baseURL: getApiBaseUrl()
 })
 
 // 计算属性

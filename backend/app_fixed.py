@@ -16,6 +16,9 @@ import qrcode
 from io import BytesIO
 import base64
 
+# 导入配置
+from config import settings, get_checkin_url, get_mobile_base_url, is_development, get_cors_origins
+
 # 数据存储
 participants_data = []
 groups_data = []
@@ -131,16 +134,20 @@ async def lifespan(app: FastAPI):
     # 启动时执行
     load_data()
     print("=" * 60)
-    print("联盟杯内训师大赛管理系统 - 修复版")
+    print(f"{settings.app_title} - 修复版")
     print("=" * 60)
     print("API服务已启动!")
-    print("访问地址: http://localhost:8000")
-    print("API文档: http://localhost:8000/docs")
-    print("前端地址: http://localhost:5173")
+    print(f"访问地址: http://{settings.host}:{settings.port}")
+    print(f"API文档: http://{settings.host}:{settings.port}{settings.api_docs_url}")
+    print(f"前端地址: {settings.frontend_url}")
+    print(f"移动端地址: {settings.mobile_base_url}")
     print("=" * 60)
     print("默认账号:")
-    print("- 管理员: admin / admin123")
+    print(f"- 管理员: {settings.default_admin_username} / {settings.default_admin_password}")
     print("- 评委: judge01 / 123456")
+    print("=" * 60)
+    print(f"环境: {settings.environment}")
+    print(f"调试模式: {settings.debug}")
     print("=" * 60)
     yield
     # 关闭时执行
@@ -148,19 +155,36 @@ async def lifespan(app: FastAPI):
 
 # 创建FastAPI应用
 app = FastAPI(
-    title="联盟杯内训师大赛管理系统",
-    description="支持签到、分组、抽签、打分等功能的比赛管理系统",
-    version="1.0.0",
+    title=settings.app_title,
+    description=settings.app_description,
+    version=settings.app_version,
+    docs_url=settings.api_docs_url,
+    redoc_url=settings.api_redoc_url,
     lifespan=lifespan
 )
+
+# 定义允许跨域的来源
+origins = [
+    "http://115.190.42.107",
+    "http://115.190.42.107:80", 
+    "http://115.190.42.107:3000",
+    "http://115.190.42.107:8080",
+    "https://115.190.42.107",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8080",
+]
 
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # 允许所有 HTTP 方法，包括 OPTIONS
+    allow_headers=["*"],  # 允许所有请求头
 )
 
 # 数据模型
@@ -197,7 +221,12 @@ class ScoreSubmit(BaseModel):
 # API路由
 @app.get("/")
 async def root():
-    return {"message": "联盟杯内训师大赛管理系统API", "version": "1.0.0"}
+    return {
+        "message": f"{settings.app_title}API", 
+        "version": settings.app_version,
+        "environment": settings.environment,
+        "docs_url": settings.api_docs_url
+    }
 
 @app.get("/api/participants", response_model=List[Participant])
 async def get_participants():
@@ -279,8 +308,8 @@ async def submit_score(request: ScoreSubmit):
         raise HTTPException(status_code=404, detail="评委不存在")
     
     # 验证分数范围
-    if not (0 <= request.score <= 10):
-        raise HTTPException(status_code=400, detail="分数必须在0-10之间")
+    if not (settings.min_score <= request.score <= settings.max_score):
+        raise HTTPException(status_code=400, detail=f"分数必须在{settings.min_score}-{settings.max_score}之间")
     
     # 检查是否已评分
     existing_score = next((s for s in scores_data if s["participant_id"] == request.participant_id and s["judge_id"] == request.judge_id), None)
@@ -351,7 +380,7 @@ async def get_participant_qrcode(participant_id: int):
         raise HTTPException(status_code=404, detail="参赛者不存在")
     
     # 生成签到链接
-    checkin_url = f"http://localhost:3000/mobile/checkin/{participant['qr_code_id']}"
+    checkin_url = get_checkin_url(participant['qr_code_id'])
     qr_code_data = generate_qr_code(checkin_url)
     
     return {"qr_code_data": qr_code_data, "checkin_url": checkin_url}
@@ -360,7 +389,7 @@ async def get_participant_qrcode(participant_id: int):
 @app.get("/api/qrcode/public")
 async def get_public_qrcode():
     """获取公共签到二维码"""
-    checkin_url = "http://localhost:3000/mobile/checkin"
+    checkin_url = get_checkin_url()
     qr_code_data = generate_qr_code(checkin_url)
     
     return {
@@ -415,9 +444,9 @@ async def mobile_checkin(request: CheckinRequest):
             "group_name": participant["group_name"]
         },
         "competition_info": {
-            "name": "联盟杯内训师大赛",
-            "date": "2024年9月24日",
-            "location": "比赛现场"
+            "name": settings.competition_name,
+            "date": settings.competition_date,
+            "location": settings.competition_location
         }
     }
 
@@ -472,8 +501,8 @@ async def get_judge_participants(judge_id: int):
 @app.post("/api/mobile/scores/submit")
 async def mobile_submit_score(request: ScoreSubmit):
     """移动端提交分数"""
-    if not (0 <= request.score <= 10):
-        raise HTTPException(status_code=400, detail="分数必须在0-10之间")
+    if not (settings.min_score <= request.score <= settings.max_score):
+        raise HTTPException(status_code=400, detail=f"分数必须在{settings.min_score}-{settings.max_score}之间")
     
     # 检查参赛者是否存在且已签到
     participant = next((p for p in participants_data if p["id"] == request.participant_id), None)
@@ -510,18 +539,18 @@ async def mobile_submit_score(request: ScoreSubmit):
         "participant_name": participant["name"]
     }
 
-# 生成公共签到二维码
-@app.get("/api/qrcode/public")
-async def get_public_qrcode():
-    """获取公共签到二维码"""
-    checkin_url = "http://localhost:3000/mobile/checkin"
-    qr_code_data = generate_qr_code(checkin_url)
-    
-    return {
-        "qr_code_data": qr_code_data,
-        "checkin_url": checkin_url,
-        "description": "参赛者扫描此二维码进行签到"
-    }
+# 生成公共签到二维码（重复接口，已在上面定义）
+# @app.get("/api/qrcode/public")
+# async def get_public_qrcode():
+#     """获取公共签到二维码"""
+#     checkin_url = get_checkin_url()
+#     qr_code_data = generate_qr_code(checkin_url)
+#     
+#     return {
+#         "qr_code_data": qr_code_data,
+#         "checkin_url": checkin_url,
+#         "description": "参赛者扫描此二维码进行签到"
+#     }
 
 # 移动端签到验证
 @app.post("/api/mobile/checkin")
@@ -766,10 +795,21 @@ async def get_participant_detail(participant_id: int):
     
     return participant_detail
 
-# 添加额外的API接口
-from app_additional_apis import add_additional_apis
-add_additional_apis(app, participants_data, groups_data, scores_data, judges_data)
+# 添加额外的API接口（如果存在）
+try:
+    try:
+        from .app_additional_apis import add_additional_apis
+    except ImportError:
+        from app_additional_apis import add_additional_apis
+    add_additional_apis(app, participants_data, groups_data, scores_data, judges_data)
+except ImportError:
+    print("app_additional_apis 模块不存在，跳过额外API加载")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app, 
+        host=settings.host, 
+        port=settings.port,
+        reload=settings.debug and is_development()
+    )

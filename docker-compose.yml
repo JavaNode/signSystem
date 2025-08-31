@@ -1,0 +1,71 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      cache_from:
+        - sign-system:latest
+    image: sign-system:latest
+    container_name: signSystem
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      # 应用配置
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - HOST=0.0.0.0
+      - PORT=8000
+      # 前端配置 - 根据实际部署情况修改这些URL
+      - FRONTEND_URL=http://your-frontend-domain:5173
+      - MOBILE_BASE_URL=http://your-mobile-domain:3000
+      # CORS配置 - 添加你的实际域名
+      - CORS_ORIGINS=http://your-frontend-domain:5173,http://your-mobile-domain:3000,http://localhost:8080
+      # 比赛信息
+      - COMPETITION_NAME=联盟杯内训师大赛
+      - COMPETITION_DATE=2024年9月24日
+      - COMPETITION_LOCATION=比赛现场
+      # 数据存储
+      - DATA_DIR=/app/data
+      - PHOTOS_DIR=/app/data/photos
+      - EXPORTS_DIR=/app/data/exports
+      # 安全配置
+      - SECRET_KEY=change-this-in-production-environment
+    volumes:
+      - ./data:/app/data
+      - ./backend:/app
+    restart: unless-stopped
+    networks:
+      - sign-system-network
+
+  # 可选：添加数据库服务
+  # database:
+  #   image: postgres:15
+  #   container_name: signSystem-db
+  #   environment:
+  #     POSTGRES_DB: signSystem
+  #     POSTGRES_USER: admin
+  #     POSTGRES_PASSWORD: password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - sign-system-network
+
+  # 可选：添加 Redis 缓存服务
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: signSystem-redis
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - sign-system-network
+
+networks:
+  sign-system-network:
+    driver: bridge
+
+# volumes:
+#   postgres_data:
